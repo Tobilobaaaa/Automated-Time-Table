@@ -23,7 +23,12 @@
       <div class="d-flex flex-wrap gap-2">
         <a href="{% url 'generate' %}" class="btn btn-accent">Generate timetable</a>
         <a href="{% url 'timetable' %}" class="btn btn-outline-secondary">View published</a>
-        <a href="{% url 'courses' %}" class="btn btn-outline-secondary">Manage courses</a>
+        <a href="{% url 'lecturers' %}" class="btn btn-outline-secondary">Lecturers</a>
+        <a href="{% url 'courses' %}" class="btn btn-outline-secondary">Courses</a>
+        <a href="{% url 'rooms' %}" class="btn btn-outline-secondary">Rooms</a>
+        <a href="{% url 'groups' %}" class="btn btn-outline-secondary">Groups</a>
+        <a href="{% url 'slots' %}" class="btn btn-outline-secondary">Time slots</a>
+        <a href="{% url 'availability' %}" class="btn btn-outline-secondary">Availability</a>
         <a href="{% url 'timetable_list' %}" class="btn btn-outline-secondary">All runs</a>
       </div>
       {% if active_run %}
