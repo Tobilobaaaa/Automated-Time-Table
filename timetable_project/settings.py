@@ -1,12 +1,35 @@
+import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / '.env')
 
-SECRET_KEY = 'django-insecure-&pycu@5y9gu3*)9h3@bs9#!#xmvf3z%-=ptzlf3i9eu0dezj*4'
 
-DEBUG = True
+def _env_bool(name, default=False):
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in ('1', 'true', 'yes', 'on')
 
-ALLOWED_HOSTS = ['*']
+
+def _env_list(name, default=None):
+    raw = os.environ.get(name, '')
+    items = [item.strip() for item in raw.split(',') if item.strip()]
+    return items if items else (default or [])
+
+
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY',
+    'django-insecure-change-me-in-env',
+)
+
+DEBUG = _env_bool('DEBUG', default=True)
+
+ALLOWED_HOSTS = _env_list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
+
+CSRF_TRUSTED_ORIGINS = _env_list('CSRF_TRUSTED_ORIGINS')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -63,12 +86,13 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'Africa/Lagos'
+TIME_ZONE = os.environ.get('TIME_ZONE', 'Africa/Lagos')
 USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

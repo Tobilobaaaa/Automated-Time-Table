@@ -2,3 +2,4 @@ Django>=5.1,<6.0
 djangorestframework>=3.15
 deap>=1.4
 openpyxl>=3.1
+python-dotenv>=1.0
