@@ -1,0 +1,58 @@
+{% extends "scheduling/base.html" %}
+{% block title %}Lecturer Availability{% endblock %}
+{% block content %}
+<h1 class="page-title">Lecturer Availability</h1>
+<p class="page-sub">
+  Soft constraints: preferred slots are favoured; unchecking “preferred” marks a slot as unavailable
+  (heavily penalised).
+</p>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="panel">
+      <h3>Add preference</h3>
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-2">
+          <label class="form-label">Lecturer</label>
+          <select name="lecturer" class="form-select" required>
+            {% for l in lecturers %}<option value="{{ l.id }}">{{ l.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Time slot</label>
+          <select name="time_slot" class="form-select" required>
+            {% for s in slots %}<option value="{{ s.id }}">{{ s }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" name="is_preferred" id="pref" checked>
+          <label class="form-check-label" for="pref">Preferred (uncheck = unavailable)</label>
+        </div>
+        <button class="btn btn-accent">Save</button>
+      </form>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="panel">
+      <table class="table table-hover align-middle mb-0">
+        <thead><tr><th>Lecturer</th><th>Slot</th><th>Type</th><th></th></tr></thead>
+        <tbody>
+          {% for p in prefs %}
+          <tr>
+            <td>{{ p.lecturer.name }}</td>
+            <td>{{ p.time_slot }}</td>
+            <td>{% if p.is_preferred %}<span class="badge text-bg-success">Preferred</span>{% else %}<span class="badge text-bg-warning">Unavailable</span>{% endif %}</td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-outline-danger" href="{% url 'delete_availability' p.pk %}">Delete</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="text-muted">No preferences set.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

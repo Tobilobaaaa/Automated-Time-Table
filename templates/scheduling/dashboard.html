@@ -1,0 +1,61 @@
+{% extends "scheduling/base.html" %}
+{% block title %}Dashboard · Automated Timetable{% endblock %}
+{% block content %}
+<h1 class="page-title">Department Timetable Generator</h1>
+<p class="page-sub">
+  Clash-free weekly lecture schedules using a genetic algorithm — hard constraints
+  (lecturer, room, group clashes &amp; capacity) and soft preferences.
+</p>
+
+<div class="stat-grid">
+  <div class="stat-card"><div class="label">Lecturers</div><div class="value">{{ stats.lecturers }}</div></div>
+  <div class="stat-card"><div class="label">Courses</div><div class="value">{{ stats.courses }}</div></div>
+  <div class="stat-card"><div class="label">Rooms</div><div class="value">{{ stats.rooms }}</div></div>
+  <div class="stat-card"><div class="label">Groups</div><div class="value">{{ stats.groups }}</div></div>
+  <div class="stat-card"><div class="label">Time slots</div><div class="value">{{ stats.slots }}</div></div>
+  <div class="stat-card"><div class="label">GA runs</div><div class="value">{{ stats.runs }}</div></div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="panel">
+      <h2>Quick actions</h2>
+      <div class="d-flex flex-wrap gap-2">
+        <a href="{% url 'generate' %}" class="btn btn-accent">Generate timetable</a>
+        <a href="{% url 'timetable' %}" class="btn btn-outline-secondary">View published</a>
+        <a href="{% url 'courses' %}" class="btn btn-outline-secondary">Manage courses</a>
+        <a href="{% url 'timetable_list' %}" class="btn btn-outline-secondary">All runs</a>
+      </div>
+      {% if active_run %}
+        <hr>
+        <p class="mb-1"><strong>Published:</strong> {{ active_run.name }}</p>
+        <p class="text-muted small mb-0">
+          Fitness {{ active_run.best_fitness|floatformat:0 }} ·
+          {{ active_run.hard_violations }} hard / {{ active_run.soft_violations }} soft violations ·
+          {{ active_run.generations_run }} generations ·
+          {{ active_run.execution_seconds }}s
+        </p>
+      {% else %}
+        <p class="text-muted mt-3 mb-0">No timetable published yet.</p>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="panel">
+      <h2>Recent runs</h2>
+      {% if recent_runs %}
+        <ul class="list-group list-group-flush">
+          {% for run in recent_runs %}
+            <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+              <a href="{% url 'timetable_detail' run.pk %}">{{ run.name }}</a>
+              <span class="badge badge-soft">{{ run.status }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted mb-0">No runs yet. Seed sample data, then generate.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "scheduling/base.html" %}
+{% block title %}Time Slots{% endblock %}
+{% block content %}
+<h1 class="page-title">Time Slots</h1>
+<p class="page-sub">Weekly periods (day + period). Seed creates Mon–Fri morning/afternoon slots.</p>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="panel">
+      <h3>Add slot</h3>
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-2">
+          <label class="form-label">Day</label>
+          <select name="day" class="form-select">
+            {% for val, label in days %}
+              <option value="{{ val }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Period</label>
+          <input name="period" type="number" min="1" max="12" class="form-control" value="1">
+        </div>
+        <div class="row g-2 mb-3">
+          <div class="col-6">
+            <label class="form-label">Start</label>
+            <input name="start_time" type="time" class="form-control" value="08:00">
+          </div>
+          <div class="col-6">
+            <label class="form-label">End</label>
+            <input name="end_time" type="time" class="form-control" value="09:00">
+          </div>
+        </div>
+        <button class="btn btn-accent">Save</button>
+      </form>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="panel">
+      <table class="table table-hover align-middle mb-0">
+        <thead><tr><th>Label</th><th>Day</th><th>Period</th><th>Time</th><th></th></tr></thead>
+        <tbody>
+          {% for s in slots %}
+          <tr>
+            <td>{{ s.label }}</td>
+            <td>{{ s.day }}</td>
+            <td>{{ s.period }}</td>
+            <td>{{ s.start_time|time:"H:i" }}–{{ s.end_time|time:"H:i" }}</td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-outline-danger" href="{% url 'delete_slot' s.pk %}">Delete</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="text-muted">No slots yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

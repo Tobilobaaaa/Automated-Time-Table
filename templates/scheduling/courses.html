@@ -1,0 +1,124 @@
+{% extends "scheduling/base.html" %}
+{% block title %}Courses{% endblock %}
+{% block content %}
+<h1 class="page-title">Courses</h1>
+<p class="page-sub">Each course links a lecturer and student group(s); sessions/week become GA genes.</p>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="panel">
+      <h3>{% if editing %}Edit course{% else %}Add course{% endif %}</h3>
+      <form method="post" action="{% if editing %}{% url 'edit_course' editing.pk %}{% else %}{% url 'courses' %}{% endif %}">
+        {% csrf_token %}
+        <div class="mb-2">
+          <label class="form-label">Code</label>
+          <input name="code" class="form-control" required placeholder="CSC 301" autocomplete="off"
+                 value="{% if form_data %}{{ form_data.code }}{% elif editing %}{{ editing.code }}{% endif %}">
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Title</label>
+          <input name="title" class="form-control" required autocomplete="off"
+                 value="{% if form_data %}{{ form_data.title }}{% elif editing %}{{ editing.title }}{% endif %}">
+        </div>
+        <div class="row g-2 mb-2">
+          <div class="col-6">
+            <label class="form-label">Units</label>
+            <input name="unit_load" type="number" class="form-control"
+                   value="{% if form_data %}{{ form_data.unit_load }}{% elif editing %}{{ editing.unit_load }}{% else %}3{% endif %}">
+          </div>
+          <div class="col-6">
+            <label class="form-label">Level</label>
+            <input name="level" type="number" class="form-control"
+                   value="{% if form_data %}{{ form_data.level }}{% elif editing %}{{ editing.level }}{% else %}300{% endif %}">
+          </div>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Sessions / week</label>
+          <input name="sessions_per_week" type="number" min="1" class="form-control"
+                 value="{% if form_data %}{{ form_data.sessions_per_week }}{% elif editing %}{{ editing.sessions_per_week }}{% else %}1{% endif %}">
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Lecturer</label>
+          <select name="lecturer" class="form-select" required>
+            <option value="">Select…</option>
+            {% for l in lecturers %}
+              <option value="{{ l.id }}"
+                {% if form_data and form_data.lecturer == l.id|stringformat:"s" %}selected
+                {% elif not form_data and editing and editing.lecturer_id == l.id %}selected
+                {% endif %}>
+                {{ l.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Student groups taught</label>
+          <div class="group-checklist">
+            {% for g in groups %}
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  name="student_groups"
+                  value="{{ g.id }}"
+                  id="group-{{ g.id }}"
+                  {% if g.id in selected_group_ids %}checked{% endif %}
+                >
+                <label class="form-check-label" for="group-{{ g.id }}">
+                  {{ g.name }} <span class="text-muted">({{ g.size }} students)</span>
+                </label>
+              </div>
+            {% empty %}
+              <p class="text-muted small mb-0">No groups yet. Add student groups first.</p>
+            {% endfor %}
+          </div>
+          <div class="form-text">Tick every class/group this course is taught to.</div>
+        </div>
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" name="requires_lab" id="lab"
+                 {% if form_data and form_data.requires_lab %}checked
+                 {% elif not form_data and editing and editing.requires_lab %}checked
+                 {% endif %}>
+          <label class="form-check-label" for="lab">Requires laboratory</label>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          <button class="btn btn-accent">{% if editing %}Update course{% else %}Save{% endif %}</button>
+          {% if editing %}
+            <a class="btn btn-outline-secondary" href="{% url 'courses' %}">Cancel</a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="panel">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Code</th><th>Title</th><th>Lecturer</th><th>Groups</th><th>Sess.</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in courses %}
+            <tr {% if editing and editing.pk == c.pk %}class="table-active"{% endif %}>
+              <td><strong>{{ c.code }}</strong></td>
+              <td>{{ c.title }}</td>
+              <td>{{ c.lecturer.name }}</td>
+              <td>{% for g in c.student_groups.all %}{{ g.name }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</td>
+              <td>{{ c.sessions_per_week }}{% if c.requires_lab %} · lab{% endif %}</td>
+              <td class="text-end text-nowrap">
+                <a class="btn btn-sm btn-outline-secondary" href="{% url 'edit_course' c.pk %}">Edit</a>
+                <a class="btn btn-sm btn-outline-danger" href="{% url 'delete_course' c.pk %}">Delete</a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-muted">No courses yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

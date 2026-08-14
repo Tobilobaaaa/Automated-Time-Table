@@ -1,0 +1,51 @@
+{% extends "scheduling/base.html" %}
+{% block title %}Lecturers{% endblock %}
+{% block content %}
+<h1 class="page-title">Lecturers</h1>
+<p class="page-sub">Add lecturers who will be assigned to courses.</p>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="panel">
+      <h3>Add lecturer</h3>
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-2">
+          <label class="form-label">Name</label>
+          <input name="name" class="form-control" required>
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Email</label>
+          <input name="email" type="email" class="form-control">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Department</label>
+          <input name="department" class="form-control" value="Computer Science">
+        </div>
+        <button class="btn btn-accent">Save</button>
+      </form>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="panel">
+      <table class="table table-hover align-middle mb-0">
+        <thead><tr><th>Name</th><th>Email</th><th>Department</th><th></th></tr></thead>
+        <tbody>
+          {% for l in lecturers %}
+          <tr>
+            <td>{{ l.name }}</td>
+            <td>{{ l.email }}</td>
+            <td>{{ l.department }}</td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-outline-danger" href="{% url 'delete_lecturer' l.pk %}">Delete</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="text-muted">No lecturers yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

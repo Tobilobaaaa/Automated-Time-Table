@@ -1,0 +1,55 @@
+{% extends "scheduling/base.html" %}
+{% block title %}Rooms{% endblock %}
+{% block content %}
+<h1 class="page-title">Rooms</h1>
+<p class="page-sub">Venues with capacity — used as a hard constraint by the GA.</p>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="panel">
+      <h3>Add room</h3>
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-2">
+          <label class="form-label">Name</label>
+          <input name="name" class="form-control" required placeholder="e.g. LT1">
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Capacity</label>
+          <input name="capacity" type="number" min="1" class="form-control" value="60" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Type</label>
+          <select name="room_type" class="form-select">
+            <option value="lecture">Lecture Hall</option>
+            <option value="lab">Laboratory</option>
+            <option value="seminar">Seminar Room</option>
+          </select>
+        </div>
+        <button class="btn btn-accent">Save</button>
+      </form>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="panel">
+      <table class="table table-hover align-middle mb-0">
+        <thead><tr><th>Name</th><th>Capacity</th><th>Type</th><th></th></tr></thead>
+        <tbody>
+          {% for r in rooms %}
+          <tr>
+            <td>{{ r.name }}</td>
+            <td>{{ r.capacity }}</td>
+            <td>{{ r.get_room_type_display }}</td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-outline-danger" href="{% url 'delete_room' r.pk %}">Delete</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4" class="text-muted">No rooms yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

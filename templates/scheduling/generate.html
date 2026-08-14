@@ -1,0 +1,82 @@
+{% extends "scheduling/base.html" %}
+{% block title %}Generate Timetable{% endblock %}
+{% block content %}
+<h1 class="page-title">Generate Timetable</h1>
+<p class="page-sub">
+  Runs the genetic algorithm (DEAP): tournament selection, two-point crossover, mutation,
+  optional greedy repair for remaining hard clashes.
+</p>
+
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="panel">
+      <h3>GA parameters</h3>
+      <p class="small text-muted">
+        Data ready: <strong>{{ course_count }}</strong> courses ·
+        <strong>{{ room_count }}</strong> rooms ·
+        <strong>{{ slot_count }}</strong> slots
+      </p>
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-2">
+          <label class="form-label">Run name</label>
+          <input name="name" class="form-control" placeholder="e.g. 2025/2026 Harmattan">
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Population size</label>
+          <input name="population_size" type="number" class="form-control" value="80" min="20" max="300">
+        </div>
+        <div class="mb-2">
+          <label class="form-label">Max generations</label>
+          <input name="max_generations" type="number" class="form-control" value="200" min="10" max="1000">
+        </div>
+        <div class="row g-2 mb-2">
+          <div class="col-6">
+            <label class="form-label">Crossover prob.</label>
+            <input name="crossover_prob" type="number" step="0.05" class="form-control" value="0.7">
+          </div>
+          <div class="col-6">
+            <label class="form-label">Mutation prob.</label>
+            <input name="mutation_prob" type="number" step="0.05" class="form-control" value="0.2">
+          </div>
+        </div>
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" name="publish" id="pub" checked>
+          <label class="form-check-label" for="pub">Publish if clash-free</label>
+        </div>
+        <button class="btn btn-accent btn-lg w-100" {% if course_count == 0 or room_count == 0 or slot_count == 0 %}disabled{% endif %}>
+          Run genetic algorithm
+        </button>
+      </form>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="panel">
+      <h3>Constraint summary</h3>
+      <ul class="mb-0">
+        <li><strong>Hard:</strong> no lecturer / room / student-group double-booking; room capacity ≥ class size; labs in lab rooms.</li>
+        <li><strong>Soft:</strong> lecturer preferred slots; avoid unavailable slots; even weekly spread; fewer daily gaps for groups.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>Recent runs</h3>
+      <table class="table table-sm align-middle mb-0">
+        <thead><tr><th>Name</th><th>Hard</th><th>Soft</th><th>Gens</th><th>Time</th></tr></thead>
+        <tbody>
+          {% for r in runs %}
+          <tr>
+            <td><a href="{% url 'timetable_detail' r.pk %}">{{ r.name }}</a></td>
+            <td>{{ r.hard_violations }}</td>
+            <td>{{ r.soft_violations }}</td>
+            <td>{{ r.generations_run }}</td>
+            <td>{{ r.execution_seconds }}s</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="text-muted">No runs yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
