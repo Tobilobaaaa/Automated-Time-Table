@@ -31,17 +31,29 @@ ALLOWED_HOSTS = _env_list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 
 CSRF_TRUSTED_ORIGINS = _env_list('CSRF_TRUSTED_ORIGINS')
 
-railway_domain = os.environ.get('RAILWAY_PUBLIC_DOMAIN', '').strip()
-if railway_domain:
-    if railway_domain not in ALLOWED_HOSTS:
-        ALLOWED_HOSTS.append(railway_domain)
-    railway_origin = f'https://{railway_domain}'
-    if railway_origin not in CSRF_TRUSTED_ORIGINS:
-        CSRF_TRUSTED_ORIGINS.append(railway_origin)
+def _allow_host(host):
+    host = (host or '').strip().removeprefix('https://').removeprefix('http://').rstrip('/')
+    if host and host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(host)
+    if host:
+        origin = f'https://{host}'
+        if origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(origin)
 
+
+# Railway
+railway_domain = os.environ.get('RAILWAY_PUBLIC_DOMAIN', '').strip()
+_allow_host(railway_domain)
 if os.environ.get('RAILWAY_ENVIRONMENT') or railway_domain:
     if '.up.railway.app' not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append('.up.railway.app')
+
+# Render (RENDER=true is set automatically)
+render_host = os.environ.get('RENDER_EXTERNAL_HOSTNAME', '').strip()
+_allow_host(render_host)
+if os.environ.get('RENDER') or render_host:
+    if '.onrender.com' not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append('.onrender.com')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
