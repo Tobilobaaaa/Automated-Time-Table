@@ -154,6 +154,27 @@ def lecturers_page(request):
     )
 
 
+def edit_lecturer(request, pk):
+    lecturer = Lecturer.objects.filter(pk=pk).first()
+    if lecturer is None:
+        messages.info(request, 'Lecturer was already removed or does not exist.')
+        return redirect('lecturers')
+    if request.method == 'POST':
+        lecturer.name = request.POST.get('name', '').strip()
+        lecturer.email = request.POST.get('email', '').strip()
+        lecturer.department = request.POST.get(
+            'department', 'Computer Science'
+        ).strip()
+        lecturer.save()
+        messages.success(request, f'{lecturer.name} updated.')
+        return redirect('lecturers')
+    return render(
+        request,
+        'scheduling/lecturers.html',
+        {'lecturers': Lecturer.objects.all(), 'editing': lecturer},
+    )
+
+
 def delete_lecturer(request, pk):
     lecturer = Lecturer.objects.filter(pk=pk).first()
     if lecturer is None:
@@ -176,14 +197,45 @@ def delete_lecturer(request, pk):
 
 def rooms_page(request):
     if request.method == 'POST':
-        Room.objects.create(
-            name=request.POST.get('name', '').strip(),
-            capacity=int(request.POST.get('capacity', 40)),
-            room_type=request.POST.get('room_type', 'lecture'),
-        )
+        try:
+            Room.objects.create(
+                name=request.POST.get('name', '').strip(),
+                capacity=int(request.POST.get('capacity', 40)),
+                room_type=request.POST.get('room_type', 'lecture'),
+            )
+        except IntegrityError:
+            messages.error(request, 'A room with that name already exists.')
+            return redirect('rooms')
         messages.success(request, 'Room added.')
         return redirect('rooms')
     return render(request, 'scheduling/rooms.html', {'rooms': Room.objects.all()})
+
+
+def edit_room(request, pk):
+    room = Room.objects.filter(pk=pk).first()
+    if room is None:
+        messages.info(request, 'Room was already removed or does not exist.')
+        return redirect('rooms')
+    if request.method == 'POST':
+        room.name = request.POST.get('name', '').strip()
+        room.capacity = int(request.POST.get('capacity', 40))
+        room.room_type = request.POST.get('room_type', 'lecture')
+        try:
+            room.save()
+        except IntegrityError:
+            messages.error(request, 'A room with that name already exists.')
+            return render(
+                request,
+                'scheduling/rooms.html',
+                {'rooms': Room.objects.all(), 'editing': room},
+            )
+        messages.success(request, f'{room.name} updated.')
+        return redirect('rooms')
+    return render(
+        request,
+        'scheduling/rooms.html',
+        {'rooms': Room.objects.all(), 'editing': room},
+    )
 
 
 def delete_room(request, pk):
@@ -192,17 +244,48 @@ def delete_room(request, pk):
 
 def groups_page(request):
     if request.method == 'POST':
-        StudentGroup.objects.create(
-            name=request.POST.get('name', '').strip(),
-            level=int(request.POST.get('level', 100)),
-            size=int(request.POST.get('size', 40)),
-        )
+        try:
+            StudentGroup.objects.create(
+                name=request.POST.get('name', '').strip(),
+                level=int(request.POST.get('level', 100)),
+                size=int(request.POST.get('size', 40)),
+            )
+        except IntegrityError:
+            messages.error(request, 'A group with that name already exists.')
+            return redirect('groups')
         messages.success(request, 'Student group added.')
         return redirect('groups')
     return render(
         request,
         'scheduling/groups.html',
         {'groups': StudentGroup.objects.all()},
+    )
+
+
+def edit_group(request, pk):
+    group = StudentGroup.objects.filter(pk=pk).first()
+    if group is None:
+        messages.info(request, 'Student group was already removed or does not exist.')
+        return redirect('groups')
+    if request.method == 'POST':
+        group.name = request.POST.get('name', '').strip()
+        group.level = int(request.POST.get('level', 100))
+        group.size = int(request.POST.get('size', 40))
+        try:
+            group.save()
+        except IntegrityError:
+            messages.error(request, 'A group with that name already exists.')
+            return render(
+                request,
+                'scheduling/groups.html',
+                {'groups': StudentGroup.objects.all(), 'editing': group},
+            )
+        messages.success(request, f'{group.name} updated.')
+        return redirect('groups')
+    return render(
+        request,
+        'scheduling/groups.html',
+        {'groups': StudentGroup.objects.all(), 'editing': group},
     )
 
 
@@ -322,30 +405,82 @@ def _course_form_context(editing=None, form_data=None):
         'selected_group_ids': selected_ids,
         'form_data': form_data,
     }
+def _parse_hhmm(value, fallback='08:00'):
+    """Parse an HTML time input (HH:MM or HH:MM:SS) into hour, minute."""
+    from datetime import time as dtime
+
+    raw = (value or fallback).strip()
+    parts = raw.split(':')
+    hour = int(parts[0])
+    minute = int(parts[1]) if len(parts) > 1 else 0
+    return dtime(hour, minute)
+
+
+def _slot_form_context(editing=None):
+    return {
+        'slots': TimeSlot.objects.all(),
+        'days': DayOfWeek.choices,
+        'editing': editing,
+    }
+
+
 def slots_page(request):
     if request.method == 'POST':
-        from datetime import time as dtime
-
         day = request.POST.get('day')
         period = int(request.POST.get('period', 1))
-        start = request.POST.get('start_time', '08:00')
-        end = request.POST.get('end_time', '09:00')
-        sh, sm = map(int, start.split(':'))
-        eh, em = map(int, end.split(':'))
-        TimeSlot.objects.create(
-            day=day,
-            period=period,
-            start_time=dtime(sh, sm),
-            end_time=dtime(eh, em),
-        )
+        try:
+            TimeSlot.objects.create(
+                day=day,
+                period=period,
+                start_time=_parse_hhmm(request.POST.get('start_time'), '08:00'),
+                end_time=_parse_hhmm(request.POST.get('end_time'), '09:00'),
+            )
+        except IntegrityError:
+            messages.error(
+                request,
+                f'{day} period {period} already exists. Edit that slot or pick another period.',
+            )
+            return render(request, 'scheduling/slots.html', _slot_form_context())
+        except (TypeError, ValueError, IndexError):
+            messages.error(request, 'Invalid day, period, or time values.')
+            return render(request, 'scheduling/slots.html', _slot_form_context())
         messages.success(request, 'Time slot added.')
         return redirect('slots')
 
-    return render(
-        request,
-        'scheduling/slots.html',
-        {'slots': TimeSlot.objects.all(), 'days': DayOfWeek.choices},
-    )
+    return render(request, 'scheduling/slots.html', _slot_form_context())
+
+
+def edit_slot(request, pk):
+    slot = TimeSlot.objects.filter(pk=pk).first()
+    if slot is None:
+        messages.info(request, 'Time slot was already removed or does not exist.')
+        return redirect('slots')
+
+    if request.method == 'POST':
+        slot.day = request.POST.get('day')
+        slot.period = int(request.POST.get('period', 1))
+        try:
+            slot.start_time = _parse_hhmm(request.POST.get('start_time'), '08:00')
+            slot.end_time = _parse_hhmm(request.POST.get('end_time'), '09:00')
+            slot.label = ''  # regenerate on save
+            slot.save()
+        except IntegrityError:
+            messages.error(
+                request,
+                f'{slot.day} period {slot.period} already exists. Choose another day/period.',
+            )
+            return render(
+                request, 'scheduling/slots.html', _slot_form_context(editing=slot)
+            )
+        except (TypeError, ValueError, IndexError):
+            messages.error(request, 'Invalid day, period, or time values.')
+            return render(
+                request, 'scheduling/slots.html', _slot_form_context(editing=slot)
+            )
+        messages.success(request, 'Time slot updated.')
+        return redirect('slots')
+
+    return render(request, 'scheduling/slots.html', _slot_form_context(editing=slot))
 
 
 def delete_slot(request, pk):
@@ -365,14 +500,51 @@ def availability_page(request):
     return render(
         request,
         'scheduling/availability.html',
-        {
-            'prefs': LecturerAvailability.objects.select_related(
-                'lecturer', 'time_slot'
-            ),
-            'lecturers': Lecturer.objects.all(),
-            'slots': TimeSlot.objects.all(),
-        },
+        _availability_form_context(),
     )
+
+
+def edit_availability(request, pk):
+    pref = LecturerAvailability.objects.filter(pk=pk).select_related(
+        'lecturer', 'time_slot'
+    ).first()
+    if pref is None:
+        messages.info(request, 'Preference was already removed or does not exist.')
+        return redirect('availability')
+
+    if request.method == 'POST':
+        pref.lecturer_id = int(request.POST.get('lecturer'))
+        pref.time_slot_id = int(request.POST.get('time_slot'))
+        pref.is_preferred = request.POST.get('is_preferred') == 'on'
+        try:
+            pref.save()
+        except IntegrityError:
+            messages.error(
+                request,
+                'That lecturer already has a preference for this time slot.',
+            )
+            return render(
+                request,
+                'scheduling/availability.html',
+                _availability_form_context(editing=pref),
+            )
+        messages.success(request, 'Availability preference updated.')
+        return redirect('availability')
+
+    return render(
+        request,
+        'scheduling/availability.html',
+        _availability_form_context(editing=pref),
+    )
+
+
+def _availability_form_context(editing=None):
+    return {
+        'prefs': LecturerAvailability.objects.select_related('lecturer', 'time_slot'),
+        'lecturers': Lecturer.objects.all(),
+        'slots': TimeSlot.objects.all(),
+        'editing': editing,
+    }
 
 
 def delete_availability(request, pk):

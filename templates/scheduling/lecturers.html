@@ -7,22 +7,28 @@
 <div class="row g-3">
   <div class="col-lg-4">
     <div class="panel">
-      <h3>Add lecturer</h3>
-      <form method="post">
+      <h3>{% if editing %}Edit lecturer{% else %}Add lecturer{% endif %}</h3>
+      <form method="post" action="{% if editing %}{% url 'edit_lecturer' editing.pk %}{% else %}{% url 'lecturers' %}{% endif %}">
         {% csrf_token %}
         <div class="mb-2">
           <label class="form-label">Name</label>
-          <input name="name" class="form-control" required>
+          <input name="name" class="form-control" required
+                 value="{% if editing %}{{ editing.name }}{% endif %}">
         </div>
         <div class="mb-2">
           <label class="form-label">Email</label>
-          <input name="email" type="email" class="form-control">
+          <input name="email" type="email" class="form-control"
+                 value="{% if editing %}{{ editing.email }}{% endif %}">
         </div>
         <div class="mb-3">
           <label class="form-label">Department</label>
-          <input name="department" class="form-control" value="Computer Science">
+          <input name="department" class="form-control"
+                 value="{% if editing %}{{ editing.department }}{% else %}Computer Science{% endif %}">
         </div>
-        <button class="btn btn-accent">Save</button>
+        <div class="d-flex flex-wrap gap-2">
+          <button class="btn btn-accent">{% if editing %}Update{% else %}Save{% endif %}</button>
+          {% if editing %}<a class="btn btn-outline-secondary" href="{% url 'lecturers' %}">Cancel</a>{% endif %}
+        </div>
       </form>
     </div>
   </div>
@@ -32,11 +38,12 @@
         <thead><tr><th>Name</th><th>Email</th><th>Department</th><th></th></tr></thead>
         <tbody>
           {% for l in lecturers %}
-          <tr>
+          <tr {% if editing and editing.pk == l.pk %}class="table-active"{% endif %}>
             <td>{{ l.name }}</td>
             <td>{{ l.email }}</td>
             <td>{{ l.department }}</td>
-            <td class="text-end">
+            <td class="text-end text-nowrap">
+              <a class="btn btn-sm btn-outline-secondary" href="{% url 'edit_lecturer' l.pk %}">Edit</a>
               <a class="btn btn-sm btn-outline-danger" href="{% url 'delete_lecturer' l.pk %}">Delete</a>
             </td>
           </tr>

@@ -7,22 +7,28 @@
 <div class="row g-3">
   <div class="col-lg-4">
     <div class="panel">
-      <h3>Add group</h3>
-      <form method="post">
+      <h3>{% if editing %}Edit group{% else %}Add group{% endif %}</h3>
+      <form method="post" action="{% if editing %}{% url 'edit_group' editing.pk %}{% else %}{% url 'groups' %}{% endif %}">
         {% csrf_token %}
         <div class="mb-2">
           <label class="form-label">Name</label>
-          <input name="name" class="form-control" required placeholder="e.g. CSC 200">
+          <input name="name" class="form-control" required placeholder="e.g. CSC 200"
+                 value="{% if editing %}{{ editing.name }}{% endif %}">
         </div>
         <div class="mb-2">
           <label class="form-label">Level</label>
-          <input name="level" type="number" class="form-control" value="200" required>
+          <input name="level" type="number" class="form-control" required
+                 value="{% if editing %}{{ editing.level }}{% else %}200{% endif %}">
         </div>
         <div class="mb-3">
           <label class="form-label">Class size</label>
-          <input name="size" type="number" min="1" class="form-control" value="45" required>
+          <input name="size" type="number" min="1" class="form-control" required
+                 value="{% if editing %}{{ editing.size }}{% else %}45{% endif %}">
         </div>
-        <button class="btn btn-accent">Save</button>
+        <div class="d-flex flex-wrap gap-2">
+          <button class="btn btn-accent">{% if editing %}Update{% else %}Save{% endif %}</button>
+          {% if editing %}<a class="btn btn-outline-secondary" href="{% url 'groups' %}">Cancel</a>{% endif %}
+        </div>
       </form>
     </div>
   </div>
@@ -32,11 +38,12 @@
         <thead><tr><th>Name</th><th>Level</th><th>Size</th><th></th></tr></thead>
         <tbody>
           {% for g in groups %}
-          <tr>
+          <tr {% if editing and editing.pk == g.pk %}class="table-active"{% endif %}>
             <td>{{ g.name }}</td>
             <td>{{ g.level }}</td>
             <td>{{ g.size }}</td>
-            <td class="text-end">
+            <td class="text-end text-nowrap">
+              <a class="btn btn-sm btn-outline-secondary" href="{% url 'edit_group' g.pk %}">Edit</a>
               <a class="btn btn-sm btn-outline-danger" href="{% url 'delete_group' g.pk %}">Delete</a>
             </td>
           </tr>

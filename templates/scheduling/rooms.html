@@ -7,26 +7,31 @@
 <div class="row g-3">
   <div class="col-lg-4">
     <div class="panel">
-      <h3>Add room</h3>
-      <form method="post">
+      <h3>{% if editing %}Edit room{% else %}Add room{% endif %}</h3>
+      <form method="post" action="{% if editing %}{% url 'edit_room' editing.pk %}{% else %}{% url 'rooms' %}{% endif %}">
         {% csrf_token %}
         <div class="mb-2">
           <label class="form-label">Name</label>
-          <input name="name" class="form-control" required placeholder="e.g. LT1">
+          <input name="name" class="form-control" required placeholder="e.g. LT1"
+                 value="{% if editing %}{{ editing.name }}{% endif %}">
         </div>
         <div class="mb-2">
           <label class="form-label">Capacity</label>
-          <input name="capacity" type="number" min="1" class="form-control" value="60" required>
+          <input name="capacity" type="number" min="1" class="form-control" required
+                 value="{% if editing %}{{ editing.capacity }}{% else %}60{% endif %}">
         </div>
         <div class="mb-3">
           <label class="form-label">Type</label>
           <select name="room_type" class="form-select">
-            <option value="lecture">Lecture Hall</option>
-            <option value="lab">Laboratory</option>
-            <option value="seminar">Seminar Room</option>
+            <option value="lecture" {% if editing and editing.room_type == 'lecture' %}selected{% endif %}>Lecture Hall</option>
+            <option value="lab" {% if editing and editing.room_type == 'lab' %}selected{% endif %}>Laboratory</option>
+            <option value="seminar" {% if editing and editing.room_type == 'seminar' %}selected{% endif %}>Seminar Room</option>
           </select>
         </div>
-        <button class="btn btn-accent">Save</button>
+        <div class="d-flex flex-wrap gap-2">
+          <button class="btn btn-accent">{% if editing %}Update{% else %}Save{% endif %}</button>
+          {% if editing %}<a class="btn btn-outline-secondary" href="{% url 'rooms' %}">Cancel</a>{% endif %}
+        </div>
       </form>
     </div>
   </div>
@@ -36,11 +41,12 @@
         <thead><tr><th>Name</th><th>Capacity</th><th>Type</th><th></th></tr></thead>
         <tbody>
           {% for r in rooms %}
-          <tr>
+          <tr {% if editing and editing.pk == r.pk %}class="table-active"{% endif %}>
             <td>{{ r.name }}</td>
             <td>{{ r.capacity }}</td>
             <td>{{ r.get_room_type_display }}</td>
-            <td class="text-end">
+            <td class="text-end text-nowrap">
+              <a class="btn btn-sm btn-outline-secondary" href="{% url 'edit_room' r.pk %}">Edit</a>
               <a class="btn btn-sm btn-outline-danger" href="{% url 'delete_room' r.pk %}">Delete</a>
             </td>
           </tr>

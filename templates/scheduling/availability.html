@@ -10,26 +10,34 @@
 <div class="row g-3">
   <div class="col-lg-4">
     <div class="panel">
-      <h3>Add preference</h3>
-      <form method="post">
+      <h3>{% if editing %}Edit preference{% else %}Add preference{% endif %}</h3>
+      <form method="post" action="{% if editing %}{% url 'edit_availability' editing.pk %}{% else %}{% url 'availability' %}{% endif %}">
         {% csrf_token %}
         <div class="mb-2">
           <label class="form-label">Lecturer</label>
           <select name="lecturer" class="form-select" required>
-            {% for l in lecturers %}<option value="{{ l.id }}">{{ l.name }}</option>{% endfor %}
+            {% for l in lecturers %}
+              <option value="{{ l.id }}" {% if editing and editing.lecturer_id == l.id %}selected{% endif %}>{{ l.name }}</option>
+            {% endfor %}
           </select>
         </div>
         <div class="mb-2">
           <label class="form-label">Time slot</label>
           <select name="time_slot" class="form-select" required>
-            {% for s in slots %}<option value="{{ s.id }}">{{ s }}</option>{% endfor %}
+            {% for s in slots %}
+              <option value="{{ s.id }}" {% if editing and editing.time_slot_id == s.id %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
           </select>
         </div>
         <div class="form-check mb-3">
-          <input class="form-check-input" type="checkbox" name="is_preferred" id="pref" checked>
+          <input class="form-check-input" type="checkbox" name="is_preferred" id="pref"
+                 {% if not editing or editing.is_preferred %}checked{% endif %}>
           <label class="form-check-label" for="pref">Preferred (uncheck = unavailable)</label>
         </div>
-        <button class="btn btn-accent">Save</button>
+        <div class="d-flex flex-wrap gap-2">
+          <button class="btn btn-accent">{% if editing %}Update{% else %}Save{% endif %}</button>
+          {% if editing %}<a class="btn btn-outline-secondary" href="{% url 'availability' %}">Cancel</a>{% endif %}
+        </div>
       </form>
     </div>
   </div>
@@ -39,11 +47,12 @@
         <thead><tr><th>Lecturer</th><th>Slot</th><th>Type</th><th></th></tr></thead>
         <tbody>
           {% for p in prefs %}
-          <tr>
+          <tr {% if editing and editing.pk == p.pk %}class="table-active"{% endif %}>
             <td>{{ p.lecturer.name }}</td>
             <td>{{ p.time_slot }}</td>
             <td>{% if p.is_preferred %}<span class="badge text-bg-success">Preferred</span>{% else %}<span class="badge text-bg-warning">Unavailable</span>{% endif %}</td>
-            <td class="text-end">
+            <td class="text-end text-nowrap">
+              <a class="btn btn-sm btn-outline-secondary" href="{% url 'edit_availability' p.pk %}">Edit</a>
               <a class="btn btn-sm btn-outline-danger" href="{% url 'delete_availability' p.pk %}">Delete</a>
             </td>
           </tr>
